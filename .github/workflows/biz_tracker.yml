@@ -1,0 +1,39 @@
+name: /biz/ Crypto Tracker
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # 每小时运行一次
+  workflow_dispatch:        # 支持手动触发
+
+# 允许 workflow 写入仓库（推送报告）
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: pip install requests
+
+      - name: 运行扫描
+        run: python biz_tracker.py
+
+      - name: 推送报告到仓库
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "📊 update report $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
